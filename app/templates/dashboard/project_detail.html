@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }} - RunFlask{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h3 class="mb-1">{{ project.name }} <span class="badge status-badge {{ project.status }}">{{ project.status }}</span></h3>
+    {% if project.source_type == 'github' %}
+      <p class="text-muted mb-0">{{ project.repo_full_name }} · rama {{ project.default_branch }}</p>
+    {% else %}
+      <p class="text-muted mb-0">Carpeta local subida manualmente</p>
+    {% endif %}
+    <a href="{{ project.url }}" target="_blank" rel="noopener">{{ project.subdomain }}.{{ base_domain }}:{{ proxy_port }}</a>
+  </div>
+  <div class="d-flex gap-2">
+    <form method="post" action="{{ url_for('dashboard.redeploy', project_id=project.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="btn btn-dark">Redesplegar</button>
+    </form>
+    <form method="post" action="{{ url_for('dashboard.delete_project', project_id=project.id) }}"
+          onsubmit="return confirm('¿Eliminar este proyecto y su contenedor?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="btn btn-outline-danger">Eliminar</button>
+    </form>
+  </div>
+</div>
+
+{% if project.source_type == 'local' and reupload_form %}
+  <div class="card shadow-sm my-4">
+    <div class="card-body">
+      <h5 class="mb-3">Subir nueva version</h5>
+      <form method="post" action="{{ url_for('dashboard.upload_new_version', project_id=project.id) }}" enctype="multipart/form-data" novalidate>
+        {{ reupload_form.hidden_tag() }}
+        <div class="mb-3">
+          {{ reupload_form.project_zip(class_="form-control") }}
+        </div>
+        {{ reupload_form.submit(class_="btn btn-dark") }}
+      </form>
+    </div>
+  </div>
+{% endif %}
+
+{% if ai_form %}
+  <div class="card shadow-sm my-4">
+    <div class="card-body">
+      <h5 class="mb-3">Editar con IA</h5>
+      <p class="text-muted small">
+        Indica el archivo del proyecto que quieres modificar (ruta relativa, p.ej.
+        <code>templates/index.html</code>) y describe el cambio deseado. Puedes
+        adjuntar una imagen de referencia (por ejemplo un diseño o una captura).
+        La IA propondra el nuevo contenido del archivo, que podras revisar antes
+        de aplicarlo.
+      </p>
+      <form method="post" action="{{ url_for('dashboard.ai_generate', project_id=project.id) }}" enctype="multipart/form-data" novalidate>
+        {{ ai_form.hidden_tag() }}
+        <div class="mb-3">
+          {{ ai_form.target_file.label(class_="form-label") }}
+          {{ ai_form.target_file(class_="form-control", placeholder="templates/index.html") }}
+          {% for error in ai_form.target_file.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          {{ ai_form.prompt.label(class_="form-label") }}
+          {{ ai_form.prompt(class_="form-control", rows=3, placeholder="Ej: cambia el color principal a verde y agrega un boton de contacto") }}
+          {% for error in ai_form.prompt.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="mb-3">
+          {{ ai_form.image.label(class_="form-label") }}
+          {{ ai_form.image(class_="form-control") }}
+          {% for error in ai_form.image.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+        {{ ai_form.submit_ai_generate(class_="btn btn-dark") }}
+      </form>
+
+      {% if ai_apply_form %}
+        <hr class="my-4">
+        <h6>Propuesta generada para <code>{{ ai_apply_form.target_file.data }}</code></h6>
+        <p class="text-muted small">Revisa y ajusta el contenido si es necesario antes de aplicarlo.</p>
+        <form method="post" action="{{ url_for('dashboard.ai_apply', project_id=project.id) }}" novalidate>
+          {{ ai_apply_form.hidden_tag() }}
+          {{ ai_apply_form.target_file(type="hidden") }}
+          <div class="mb-3">
+            {{ ai_apply_form.content(class_="form-control deploy-log", rows=16) }}
+          </div>
+          {{ ai_apply_form.submit_ai_apply(class_="btn btn-success") }}
+        </form>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+<h5 class="mt-4">Historial de deploys</h5>
+{% if not project.deployments %}
+  <p class="text-muted">Sin deploys todavia.</p>
+{% else %}
+  {% for d in project.deployments %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <strong>{{ d.status }}</strong>
+            {% if d.commit_sha %}<span class="text-muted small ms-2">commit {{ d.commit_sha[:8] }}</span>{% endif %}
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">{{ d.created_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary"
+                    data-bs-toggle="collapse" data-bs-target="#deploy-log-{{ d.id }}"
+                    aria-expanded="false" aria-controls="deploy-log-{{ d.id }}">
+              Ver log
+            </button>
+          </div>
+        </div>
+        <div class="collapse mt-2" id="deploy-log-{{ d.id }}">
+          <pre class="deploy-log">{{ d.log or 'Sin salida.' }}</pre>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-bs-toggle="collapse"][data-bs-target^="#deploy-log-"]').forEach(function (btn) {
+  var target = document.querySelector(btn.getAttribute('data-bs-target'));
+  if (!target) return;
+  target.addEventListener('show.bs.collapse', function () { btn.textContent = 'Ocultar log'; });
+  target.addEventListener('hide.bs.collapse', function () { btn.textContent = 'Ver log'; });
+});
+</script>
+{% endblock %}

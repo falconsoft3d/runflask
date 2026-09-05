@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Nuevo proyecto - RunFlask{% endblock %}
+{% block content %}
+<div class="row justify-content-center g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <h4 class="mb-3">Conectar un repositorio de GitHub</h4>
+
+        {% if not current_user.github_token %}
+          <p>Necesitas conectar tu cuenta de GitHub primero.</p>
+          <a href="{{ url_for('github.connect') }}" class="btn btn-dark">Conectar con GitHub</a>
+        {% else %}
+          <form method="post" action="{{ url_for('dashboard.new_project') }}" novalidate>
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+              {{ form.repo_full_name.label(class_="form-label") }}
+              {{ form.repo_full_name(class_="form-select") }}
+            </div>
+            <div class="mb-3">
+              {{ form.subdomain.label(class_="form-label") }}
+              <div class="input-group">
+                {{ form.subdomain(class_="form-control", placeholder="mi-proyecto") }}
+                <span class="input-group-text">.{{ base_domain }}:{{ proxy_port }}</span>
+              </div>
+              <div class="form-text">Solo letras minusculas, numeros y guiones.</div>
+            </div>
+            {{ form.submit(class_="btn btn-dark w-100") }}
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body p-4">
+        <h4 class="mb-3">Subir una carpeta local</h4>
+        <p class="text-muted small">Comprime tu proyecto Flask en un archivo .zip (incluye tu <code>Dockerfile</code> si tienes uno, o dejamos que generemos uno genérico) y súbelo directamente.</p>
+        <form method="post" action="{{ url_for('dashboard.new_project_local') }}" enctype="multipart/form-data" novalidate>
+          {{ local_form.hidden_tag() }}
+          <div class="mb-3">
+            {{ local_form.name.label(class_="form-label") }}
+            {{ local_form.name(class_="form-control", placeholder="Mi app local") }}
+          </div>
+          <div class="mb-3">
+            {{ local_form.subdomain.label(class_="form-label") }}
+            <div class="input-group">
+              {{ local_form.subdomain(class_="form-control", placeholder="mi-app-local") }}
+              <span class="input-group-text">.{{ base_domain }}:{{ proxy_port }}</span>
+            </div>
+            <div class="form-text">Solo letras minusculas, numeros y guiones.</div>
+          </div>
+          <div class="mb-3">
+            {{ local_form.project_zip.label(class_="form-label") }}
+            {{ local_form.project_zip(class_="form-control") }}
+          </div>
+          {{ local_form.submit(class_="btn btn-dark w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

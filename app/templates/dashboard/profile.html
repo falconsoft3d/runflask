@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil - RunFlask{% endblock %}
+{% block content %}
+<h3 class="mb-4">Mi perfil</h3>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="mb-3">Datos de la cuenta</h5>
+        <form method="post" novalidate>
+          {{ profile_form.hidden_tag() }}
+          <div class="mb-3">
+            {{ profile_form.email.label(class_="form-label") }}
+            {{ profile_form.email(class_="form-control", autocomplete="email") }}
+          </div>
+          {% if current_user.github_login %}
+            <p class="text-muted small">GitHub conectado: <strong>{{ current_user.github_login }}</strong></p>
+          {% endif %}
+          {{ profile_form.submit_profile(class_="btn btn-dark w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="mb-3">Cambiar contrasena</h5>
+        <form method="post" novalidate>
+          {{ password_form.hidden_tag() }}
+          <div class="mb-3">
+            {{ password_form.current_password.label(class_="form-label") }}
+            {{ password_form.current_password(class_="form-control", autocomplete="current-password") }}
+          </div>
+          <div class="mb-3">
+            {{ password_form.new_password.label(class_="form-label") }}
+            {{ password_form.new_password(class_="form-control", autocomplete="new-password") }}
+          </div>
+          <div class="mb-3">
+            {{ password_form.confirm_password.label(class_="form-label") }}
+            {{ password_form.confirm_password(class_="form-control", autocomplete="new-password") }}
+          </div>
+          {{ password_form.submit_password(class_="btn btn-dark w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

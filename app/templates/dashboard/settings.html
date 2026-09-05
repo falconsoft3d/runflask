@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Configuracion - RunFlask{% endblock %}
+{% block content %}
+<h3 class="mb-4">Configuracion de la plataforma</h3>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="mb-3">Registro de nuevas cuentas</h5>
+        <p class="text-muted">
+          Estado actual:
+          <span class="badge {{ 'bg-success' if app_settings.registration_enabled else 'bg-secondary' }}">
+            {{ 'Habilitado' if app_settings.registration_enabled else 'Deshabilitado' }}
+          </span>
+        </p>
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+          <input type="hidden" name="action" value="toggle_registration"/>
+          <button type="submit" class="btn btn-dark w-100">
+            {{ 'Deshabilitar registro' if app_settings.registration_enabled else 'Habilitar registro' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="mb-3">IA para editar proyectos (OpenAI)</h5>
+        <p class="text-muted small">
+          Esta API key se usa para la funcion "Editar con IA" disponible en cada proyecto,
+          que permite pedir cambios en un archivo describiendolos en texto (y opcionalmente
+          adjuntando una imagen de referencia).
+        </p>
+        <p class="text-muted">
+          Estado actual:
+          <span class="badge {{ 'bg-success' if app_settings.openai_api_key else 'bg-secondary' }}">
+            {{ 'Configurada' if app_settings.openai_api_key else 'Sin configurar' }}
+          </span>
+        </p>
+        <form method="post" novalidate>
+          {{ openai_form.hidden_tag() }}
+          <div class="mb-3">
+            {{ openai_form.api_key.label(class_="form-label") }}
+            {{ openai_form.api_key(class_="form-control", placeholder="sk-...", autocomplete="off") }}
+            <div class="form-text">Dejar en blanco y guardar para quitar la API key.</div>
+          </div>
+          {{ openai_form.submit_openai(class_="btn btn-dark w-100") }}
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
