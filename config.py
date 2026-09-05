@@ -36,6 +36,7 @@ class Config:
 
     DEPLOY_PORT_RANGE_START = int(os.environ.get("DEPLOY_PORT_RANGE_START", 20000))
     DEPLOY_PORT_RANGE_END = int(os.environ.get("DEPLOY_PORT_RANGE_END", 21000))
+    PROJECT_DOCKER_NETWORK = os.environ.get("PROJECT_DOCKER_NETWORK", "runflask-net")
 
     WORKSPACES_DIR = os.path.join(basedir, "workspaces")
 

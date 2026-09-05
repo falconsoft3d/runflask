@@ -71,6 +71,7 @@ def build_and_run(
     image_tag: str,
     container_name: str,
     port_range: tuple,
+    docker_network: str,
     log_callback=None,
 ) -> tuple:
     """Construye la imagen Docker y corre el contenedor. Devuelve (container_id, host_port)."""
@@ -93,6 +94,15 @@ def build_and_run(
     except DockerException as exc:
         raise DeployError(f"Fallo al construir la imagen: {exc}") from exc
 
+    if docker_network:
+        try:
+            client.networks.get(docker_network)
+        except NotFound:
+            log(f"Creando red Docker {docker_network}...")
+            client.networks.create(docker_network)
+        except DockerException as exc:
+            raise DeployError(f"No se pudo preparar la red Docker {docker_network}: {exc}") from exc
+
     # Elimina el contenedor anterior del proyecto, si existe
     try:
         old = client.containers.get(container_name)
@@ -110,6 +120,7 @@ def build_and_run(
             name=container_name,
             detach=True,
             ports={"5000/tcp": host_port},
+            network=docker_network or None,
             mem_limit="256m",
             nano_cpus=1_000_000_000,  # 1 CPU
             restart_policy={"Name": "unless-stopped"},

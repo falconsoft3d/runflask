@@ -30,6 +30,7 @@ def _build_and_register(app, project: Project, deployment: Deployment, project_d
         image_tag,
         _container_name(project),
         (app.config["DEPLOY_PORT_RANGE_START"], app.config["DEPLOY_PORT_RANGE_END"]),
+        app.config["PROJECT_DOCKER_NETWORK"],
         log_callback=log,
     )
 
