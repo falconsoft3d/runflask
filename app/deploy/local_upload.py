@@ -1,8 +1,11 @@
 import os
+import shutil
 import zipfile
 
 MAX_UNCOMPRESSED_SIZE = int(os.environ.get("LOCAL_UPLOAD_MAX_UNCOMPRESSED_MB", 200)) * 1024 * 1024
 MAX_FILES = int(os.environ.get("LOCAL_UPLOAD_MAX_FILES", 5000))
+JUNK_FILE_NAMES = {".DS_Store"}
+JUNK_DIR_NAMES = {"__MACOSX"}
 
 
 class UploadError(Exception):
@@ -15,13 +18,22 @@ def _is_within_directory(directory: str, target: str) -> bool:
     return os.path.commonpath([abs_directory]) == os.path.commonpath([abs_directory, abs_target])
 
 
+def _remove_upload_junk(dest_dir: str) -> None:
+    for root, dirs, files in os.walk(dest_dir, topdown=False):
+        for filename in files:
+            if filename in JUNK_FILE_NAMES or filename.startswith("._"):
+                os.remove(os.path.join(root, filename))
+        for dirname in dirs:
+            path = os.path.join(root, dirname)
+            if dirname in JUNK_DIR_NAMES:
+                shutil.rmtree(path)
+
+
 def extract_zip_safely(file_storage, dest_dir: str) -> None:
     """Extrae un zip subido por el usuario validando cada entrada contra path
     traversal (zip-slip) y limitando el numero de archivos y el tamano total
     descomprimido (mitiga zip-bombs)."""
     if os.path.isdir(dest_dir):
-        import shutil
-
         shutil.rmtree(dest_dir)
     os.makedirs(dest_dir, exist_ok=True)
 
@@ -46,12 +58,12 @@ def extract_zip_safely(file_storage, dest_dir: str) -> None:
     except zipfile.BadZipFile as exc:
         raise UploadError("El archivo no es un zip valido.") from exc
 
+    _remove_upload_junk(dest_dir)
+
     # Si el zip contiene una unica carpeta raiz, "aplana" su contenido para
     # que el Dockerfile quede en la raiz del contexto de build.
-    entries = [e for e in os.listdir(dest_dir) if not e.startswith("__MACOSX")]
+    entries = os.listdir(dest_dir)
     if len(entries) == 1 and os.path.isdir(os.path.join(dest_dir, entries[0])):
-        import shutil
-
         inner = os.path.join(dest_dir, entries[0])
         for name in os.listdir(inner):
             shutil.move(os.path.join(inner, name), os.path.join(dest_dir, name))
