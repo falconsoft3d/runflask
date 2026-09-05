@@ -44,9 +44,12 @@ def create_app(config_class=Config):
     def inject_globals():
         from app.models import AppSettings
 
+        public_project_port = app.config["PUBLIC_PROJECT_PORT"]
+        public_project_port_suffix = f":{public_project_port}" if public_project_port else ""
+
         return {
             "base_domain": app.config["BASE_DOMAIN"],
-            "proxy_port": app.config["PROXY_PORT"],
+            "public_project_port_suffix": public_project_port_suffix,
             "registration_enabled": AppSettings.get().registration_enabled,
         }
 

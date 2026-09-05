@@ -106,8 +106,10 @@ class Project(db.Model):
     def url(self):
         from flask import current_app
         base = current_app.config["BASE_DOMAIN"]
-        port = current_app.config["PROXY_PORT"]
-        return f"http://{self.subdomain}.{base}:{port}"
+        scheme = current_app.config["PUBLIC_PROJECT_SCHEME"]
+        port = current_app.config["PUBLIC_PROJECT_PORT"]
+        port_suffix = f":{port}" if port else ""
+        return f"{scheme}://{self.subdomain}.{base}{port_suffix}"
 
 
 class Deployment(db.Model):

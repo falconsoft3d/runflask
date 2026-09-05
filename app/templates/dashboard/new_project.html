@@ -21,7 +21,7 @@
               {{ form.subdomain.label(class_="form-label") }}
               <div class="input-group">
                 {{ form.subdomain(class_="form-control", placeholder="mi-proyecto") }}
-                <span class="input-group-text">.{{ base_domain }}:{{ proxy_port }}</span>
+                <span class="input-group-text">.{{ base_domain }}{{ public_project_port_suffix }}</span>
               </div>
               <div class="form-text">Solo letras minusculas, numeros y guiones.</div>
             </div>
@@ -47,7 +47,7 @@
             {{ local_form.subdomain.label(class_="form-label") }}
             <div class="input-group">
               {{ local_form.subdomain(class_="form-control", placeholder="mi-app-local") }}
-              <span class="input-group-text">.{{ base_domain }}:{{ proxy_port }}</span>
+              <span class="input-group-text">.{{ base_domain }}{{ public_project_port_suffix }}</span>
             </div>
             <div class="form-text">Solo letras minusculas, numeros y guiones.</div>
           </div>

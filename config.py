@@ -23,6 +23,14 @@ class Config:
 
     BASE_DOMAIN = os.environ.get("BASE_DOMAIN", "localhost")
     PROXY_PORT = int(os.environ.get("PROXY_PORT", 8080))
+    PUBLIC_PROJECT_SCHEME = os.environ.get("PUBLIC_PROJECT_SCHEME", "http")
+    _PUBLIC_PROJECT_PORT = os.environ.get("PUBLIC_PROJECT_PORT")
+    if _PUBLIC_PROJECT_PORT is None:
+        PUBLIC_PROJECT_PORT = PROXY_PORT
+    elif _PUBLIC_PROJECT_PORT.strip() == "":
+        PUBLIC_PROJECT_PORT = None
+    else:
+        PUBLIC_PROJECT_PORT = int(_PUBLIC_PROJECT_PORT)
 
     DEPLOY_PORT_RANGE_START = int(os.environ.get("DEPLOY_PORT_RANGE_START", 20000))
     DEPLOY_PORT_RANGE_END = int(os.environ.get("DEPLOY_PORT_RANGE_END", 21000))

@@ -9,7 +9,7 @@
     {% else %}
       <p class="text-muted mb-0">Carpeta local subida manualmente</p>
     {% endif %}
-    <a href="{{ project.url }}" target="_blank" rel="noopener">{{ project.subdomain }}.{{ base_domain }}:{{ proxy_port }}</a>
+    <a href="{{ project.url }}" target="_blank" rel="noopener">{{ project.url }}</a>
   </div>
   <div class="d-flex gap-2">
     <form method="post" action="{{ url_for('dashboard.redeploy', project_id=project.id) }}">
