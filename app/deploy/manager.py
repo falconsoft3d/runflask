@@ -14,7 +14,7 @@ RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.
 RUN pip install --no-cache-dir gunicorn
 ENV PORT=5000
 EXPOSE 5000
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:5000 app:app || gunicorn -b 0.0.0.0:5000 wsgi:app || gunicorn -b 0.0.0.0:5000 run:app || python app.py || python run.py"]
+CMD ["sh", "-c", "if [ -f app.py ]; then gunicorn -b 0.0.0.0:5000 app:app; elif [ -f wsgi.py ]; then gunicorn -b 0.0.0.0:5000 wsgi:app; elif [ -f run.py ]; then gunicorn -b 0.0.0.0:5000 run:app; else echo 'No se encontro app.py, wsgi.py ni run.py en /app' >&2; exit 1; fi"]
 """
 
 
