@@ -1,8 +1,8 @@
 import os
 import zipfile
 
-MAX_UNCOMPRESSED_SIZE = 200 * 1024 * 1024  # 200 MB
-MAX_FILES = 5000
+MAX_UNCOMPRESSED_SIZE = int(os.environ.get("LOCAL_UPLOAD_MAX_UNCOMPRESSED_MB", 200)) * 1024 * 1024
+MAX_FILES = int(os.environ.get("LOCAL_UPLOAD_MAX_FILES", 5000))
 
 
 class UploadError(Exception):
@@ -29,13 +29,14 @@ def extract_zip_safely(file_storage, dest_dir: str) -> None:
         with zipfile.ZipFile(file_storage) as zf:
             infos = zf.infolist()
             if len(infos) > MAX_FILES:
-                raise UploadError("El archivo zip tiene demasiados elementos.")
+                raise UploadError(f"El archivo zip tiene demasiados elementos. Limite actual: {MAX_FILES}.")
 
             total_size = 0
             for info in infos:
                 total_size += info.file_size
                 if total_size > MAX_UNCOMPRESSED_SIZE:
-                    raise UploadError("El proyecto descomprimido supera el limite de tamano permitido.")
+                    limit_mb = MAX_UNCOMPRESSED_SIZE // (1024 * 1024)
+                    raise UploadError(f"El proyecto descomprimido supera el limite de tamano permitido ({limit_mb} MB).")
 
                 target_path = os.path.join(dest_dir, info.filename)
                 if not _is_within_directory(dest_dir, target_path):
