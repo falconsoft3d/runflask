@@ -14,7 +14,7 @@ RUN if [ -f requirements.txt ]; then pip install --no-cache-dir -r requirements.
 RUN pip install --no-cache-dir gunicorn
 ENV PORT=5000
 EXPOSE 5000
-CMD ["sh", "-c", "gunicorn -b 0.0.0.0:5000 app:app || gunicorn -b 0.0.0.0:5000 wsgi:app || python app.py"]
+CMD ["sh", "-c", "gunicorn -b 0.0.0.0:5000 app:app || gunicorn -b 0.0.0.0:5000 wsgi:app || gunicorn -b 0.0.0.0:5000 run:app || python app.py || python run.py"]
 """
 
 

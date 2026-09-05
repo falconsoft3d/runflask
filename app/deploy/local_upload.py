@@ -6,6 +6,7 @@ MAX_UNCOMPRESSED_SIZE = int(os.environ.get("LOCAL_UPLOAD_MAX_UNCOMPRESSED_MB", 2
 MAX_FILES = int(os.environ.get("LOCAL_UPLOAD_MAX_FILES", 5000))
 JUNK_FILE_NAMES = {".DS_Store"}
 JUNK_DIR_NAMES = {"__MACOSX"}
+ENTRYPOINT_FILENAMES = {"app.py", "wsgi.py", "run.py"}
 
 
 class UploadError(Exception):
@@ -27,6 +28,35 @@ def _remove_upload_junk(dest_dir: str) -> None:
             path = os.path.join(root, dirname)
             if dirname in JUNK_DIR_NAMES:
                 shutil.rmtree(path)
+
+
+def _has_supported_entrypoint(directory: str) -> bool:
+    return any(os.path.isfile(os.path.join(directory, filename)) for filename in ENTRYPOINT_FILENAMES)
+
+
+def _flatten_single_root_directory(dest_dir: str) -> None:
+    if _has_supported_entrypoint(dest_dir):
+        return
+
+    entries = os.listdir(dest_dir)
+    directories = [entry for entry in entries if os.path.isdir(os.path.join(dest_dir, entry))]
+    if len(entries) != 1 or len(directories) != 1:
+        return
+
+    inner = os.path.join(dest_dir, directories[0])
+    for name in os.listdir(inner):
+        shutil.move(os.path.join(inner, name), os.path.join(dest_dir, name))
+    shutil.rmtree(inner)
+
+
+def _validate_supported_entrypoint(dest_dir: str) -> None:
+    if _has_supported_entrypoint(dest_dir):
+        return
+    supported = ", ".join(sorted(ENTRYPOINT_FILENAMES))
+    raise UploadError(
+        "No se encontro un archivo de entrada Flask en la raiz del proyecto. "
+        f"Incluye uno de estos archivos en el .zip: {supported}."
+    )
 
 
 def extract_zip_safely(file_storage, dest_dir: str) -> None:
@@ -59,12 +89,5 @@ def extract_zip_safely(file_storage, dest_dir: str) -> None:
         raise UploadError("El archivo no es un zip valido.") from exc
 
     _remove_upload_junk(dest_dir)
-
-    # Si el zip contiene una unica carpeta raiz, "aplana" su contenido para
-    # que el Dockerfile quede en la raiz del contexto de build.
-    entries = os.listdir(dest_dir)
-    if len(entries) == 1 and os.path.isdir(os.path.join(dest_dir, entries[0])):
-        inner = os.path.join(dest_dir, entries[0])
-        for name in os.listdir(inner):
-            shutil.move(os.path.join(inner, name), os.path.join(dest_dir, name))
-        shutil.rmtree(inner)
+    _flatten_single_root_directory(dest_dir)
+    _validate_supported_entrypoint(dest_dir)
