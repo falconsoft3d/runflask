@@ -1,4 +1,5 @@
 import os
+from urllib.parse import urlparse
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -23,10 +24,11 @@ class Config:
 
     BASE_DOMAIN = os.environ.get("BASE_DOMAIN", "localhost")
     PROXY_PORT = int(os.environ.get("PROXY_PORT", 8080))
-    PUBLIC_PROJECT_SCHEME = os.environ.get("PUBLIC_PROJECT_SCHEME", "http")
+    _PUBLIC_WEBHOOK_URL = urlparse(PUBLIC_WEBHOOK_BASE_URL)
+    PUBLIC_PROJECT_SCHEME = os.environ.get("PUBLIC_PROJECT_SCHEME") or _PUBLIC_WEBHOOK_URL.scheme or "http"
     _PUBLIC_PROJECT_PORT = os.environ.get("PUBLIC_PROJECT_PORT")
     if _PUBLIC_PROJECT_PORT is None:
-        PUBLIC_PROJECT_PORT = PROXY_PORT
+        PUBLIC_PROJECT_PORT = _PUBLIC_WEBHOOK_URL.port if _PUBLIC_WEBHOOK_URL.netloc else PROXY_PORT
     elif _PUBLIC_PROJECT_PORT.strip() == "":
         PUBLIC_PROJECT_PORT = None
     else:
